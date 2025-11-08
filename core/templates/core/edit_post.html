@@ -1,0 +1,28 @@
+{% block content %}
+<h2>Edit Post</h2>
+
+<form method="POST" enctype="multipart/form-data" style="max-width:500px;">
+    {% csrf_token %}
+    
+    {{ form.non_field_errors }}
+    
+    <div style="margin-bottom:10px;">
+        {{ form.caption.label_tag }}<br>
+        {{ form.caption }}
+        {{ form.caption.errors }}
+    </div>
+
+    <div style="margin-bottom:10px;">
+        {{ form.image.label_tag }}<br>
+        {{ form.image }}
+        {% if form.instance.image %}
+            <p>Current Image:</p>
+            <img src="{{ form.instance.image.url }}" width="300" style="border-radius:10px; margin-top:5px;">
+        {% endif %}
+        {{ form.image.errors }}
+    </div>
+
+    <button type="submit" style="padding:5px 15px;">Update Post</button>
+    <a href="{% url 'user_profile' request.user.username %}" style="margin-left:10px;">Cancel</a>
+</form>
+{% endblock %}

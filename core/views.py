@@ -1,6 +1,6 @@
 import random
 from django.shortcuts import render, redirect,get_object_or_404
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login,logout
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.conf import settings
@@ -10,7 +10,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-
 
 def register_view(request):
     if request.method == 'POST':
@@ -78,6 +77,10 @@ def login_view(request):
             return render(request, 'core/login.html', {'error': 'Invalid credentials'})
 
     return render(request, 'core/login.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
 
 def resend_otp_view(request):
     email = request.session.get('email')
@@ -184,15 +187,6 @@ def like_post_view(request, post_id):
         like.delete()
     return HttpResponseRedirect(reverse('feed'))
 
-@login_required
-def comment_post(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-    if request.method == 'POST':
-        content = request.POST.get('content')
-        if content:
-            Comment.objects.create(post=post, user=request.user, content=content)
-    return redirect('feed')
-
 
 @login_required
 def follow_user(request, username):
@@ -208,14 +202,69 @@ def unfollow_user(request, username):
     return redirect('user_profile', username=username)
 
 
+
+def post_likes_view(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    liked_users = post.likes.all()  # Assuming Post model has a ManyToManyField for likes
+    return render(request, 'core/post_likes.html', {'post': post, 'liked_users': liked_users})
+
+
+@login_required
+def edit_post_view(request, post_id):
+    post = get_object_or_404(Post, id=post_id, user=request.user)
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES, instance=post)
+        if form.is_valid():
+            form.save()
+            return redirect('user_profile', username=request.user.username)
+    else:
+        form = PostForm(instance=post)
+    return render(request, 'core/edit_post.html', {'form': form})
+
+@login_required
+def delete_post_view(request, post_id):
+    post = get_object_or_404(Post, id=post_id, user=request.user)
+    post.delete()
+    return redirect('user_profile', username=request.user.username)
+
+@login_required
+def toggle_hide_post_view(request, post_id):
+    post = get_object_or_404(Post, id=post_id, user=request.user)
+    post.hidden = not post.hidden
+    post.save()
+    return redirect('user_profile', username=request.user.username)
+
+@login_required
+def comment_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        parent_id = request.POST.get('parent_id')
+        parent_comment = None
+        if parent_id:
+            parent_comment = Comment.objects.get(id=parent_id)
+        if content:
+            Comment.objects.create(post=post, user=request.user, content=content, parent=parent_comment)
+    return redirect('user_profile', username=post.user.username)
+
+
+@login_required
+def like_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+    if request.user in comment.liked_by.all():
+        comment.liked_by.remove(request.user)
+    else:
+        comment.liked_by.add(request.user)
+    return redirect('user_profile', username=comment.post.user.username)
+
+
 @login_required
 def feed_view(request):
-    # Get all posts except the logged-in user's posts
-    posts = Post.objects.exclude(user=request.user).order_by('-created_at')
+    # Exclude hidden posts and own posts from the feed
+    posts = Post.objects.filter(hidden=False).exclude(user=request.user).order_by('-created_at')
 
     liked_posts = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
-    
-    # Preload likes for each post to reduce queries
+
     posts_data = []
     for post in posts:
         likes = Like.objects.filter(post=post).select_related('user')
@@ -223,7 +272,7 @@ def feed_view(request):
             'post': post,
             'likes': [like.user for like in likes],
         })
-    
+
     return render(request, 'core/feed.html', {
         'posts_data': posts_data,
         'liked_posts': liked_posts,
@@ -231,22 +280,30 @@ def feed_view(request):
 
 @login_required
 def user_profile_view(request, username):
-    # Show the user's own posts (if viewing your own profile or someone else’s)
     profile_user = get_object_or_404(User, username=username)
-    posts = Post.objects.filter(user=profile_user).order_by('-created_at')
 
-    # Check if the logged-in user follows this profile
+    # If it's the owner, show all posts, else exclude hidden posts
+    if profile_user == request.user:
+        posts = Post.objects.filter(user=profile_user).order_by('-created_at')
+    else:
+        posts = Post.objects.filter(user=profile_user, hidden=False).order_by('-created_at')
+
     is_following = Follow.objects.filter(follower=request.user, following=profile_user).exists()
+
+    # Prepare top-level comments
+    posts_data = []
+    for post in posts:
+        top_comments = post.comments.filter(parent__isnull=True).select_related('user').prefetch_related('replies', 'liked_by')
+        posts_data.append({
+            'post': post,
+            'top_comments': top_comments,
+        })
+
+    liked_posts = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
 
     return render(request, 'core/profile.html', {
         'profile_user': profile_user,
-        'posts': posts,
+        'posts_data': posts_data,
         'is_following': is_following,
+        'liked_posts': liked_posts,
     })
-
-
-def post_likes_view(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-    liked_users = post.likes.all()  # Assuming Post model has a ManyToManyField for likes
-    return render(request, 'core/post_likes.html', {'post': post, 'liked_users': liked_users})
-

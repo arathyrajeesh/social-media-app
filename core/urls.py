@@ -16,7 +16,11 @@ urlpatterns = [
     path('user/<str:username>/follow/', views.follow_user, name='follow_user'),
     path('user/<str:username>/unfollow/', views.unfollow_user, name='unfollow_user'),
     path('post/<int:post_id>/likes/', views.post_likes_view, name='post_likes'),
-
+    path('post/edit/<int:post_id>/', views.edit_post_view, name='edit_post'),
+    path('post/delete/<int:post_id>/', views.delete_post_view, name='delete_post'),
+    path('post/toggle-hide/<int:post_id>/', views.toggle_hide_post_view, name='toggle_hide_post'),
+    path('comment/like/<int:comment_id>/', views.like_comment, name='like_comment'),
+    path('logout/', views.logout_view, name='logout'),
 ]
 
 

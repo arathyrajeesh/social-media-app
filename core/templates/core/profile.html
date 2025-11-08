@@ -1,27 +1,178 @@
-{% block content %}
-<h2>{{ profile_user.username }}'s Profile</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ request.user.username }}'s Feed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0 20px;
+        }
 
-{% if profile_user == request.user %}
-    <p>This is your profile. You can see all your posts here.</p>
-{% else %}
-    {% if is_following %}
-        <a href="{% url 'unfollow_user' profile_user.username %}">Unfollow</a>
-    {% else %}
-        <a href="{% url 'follow_user' profile_user.username %}">Follow</a>
-    {% endif %}
-{% endif %}
+        nav {
+            padding: 10px;
+            background-color: #fff;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
 
-<hr>
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+        }
 
-{% for post in posts %}
-<div class="post" style="border:1px solid #ddd;padding:10px;margin:15px 0;border-radius:8px;">
-    <p>{{ post.caption }}</p>
-    {% if post.image %}
-        <img src="{{ post.image.url }}" width="300" style="border-radius:10px;">
-    {% endif %}
-    <p>❤️ {{ post.likes.count }} Likes</p>
-</div>
-{% empty %}
-    <p>No posts yet.</p>
-{% endfor %}
-{% endblock %}
+        nav a:hover {
+            color: #007bff;
+        }
+
+        .post {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+
+        .post img {
+            border-radius: 8px;
+            max-width: 100%;
+        }
+
+        .dropdown {
+            transition: all 0.3s ease-in-out;
+            background: #fafafa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+
+        .dropdown ul {
+            list-style: none;
+            padding-left: 10px;
+        }
+
+        .dropdown ul li {
+            margin: 4px 0;
+        }
+
+        input[type=text] {
+            padding: 5px;
+            width: 80%;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <a href="{% url 'feed' %}">Home</a>
+        <a href="{% url 'user_profile' request.user.username %}">My Profile</a>
+        <a href="{% url 'create_post' %}">Create Post</a>
+        <a href="{% url 'logout' %}">Logout</a>
+    </nav>
+
+    <h2>Welcome, {{ request.user.username }}!</h2>
+
+    <!-- Feed Section -->
+    {% for item in posts_data %}
+    {% with post=item.post likes=item.likes %}
+    <div class="post">
+        <!-- Post Header -->
+        <p>
+            <strong>
+                <a href="{% url 'user_profile' post.user.username %}">{{ post.user.username }}</a>
+            </strong>
+            • {{ post.created_at|date:"M d, Y H:i" }}
+        </p>
+
+        <!-- Caption & Image -->
+        <p>{{ post.caption }}</p>
+        {% if post.image %}
+            <img src="{{ post.image.url }}" alt="Post Image">
+        {% endif %}
+
+        <!-- Likes -->
+        <p>
+            ❤️ {{ likes|length }}
+            <a href="javascript:void(0)" onclick="toggleLikes('{{ post.id }}')">View Likes</a>
+            {% if post.id in liked_posts %}
+                <a href="{% url 'like_post' post.id %}">Unlike</a>
+            {% else %}
+                <a href="{% url 'like_post' post.id %}">Like</a>
+            {% endif %}
+        </p>
+
+        <div id="likes-{{ post.id }}" class="dropdown" style="display:none;">
+            <ul>
+                {% for user in likes %}
+                    <li><a href="{% url 'user_profile' user.username %}">{{ user.username }}</a></li>
+                {% empty %}
+                    <li>No likes yet</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Comments -->
+        <p>
+            💬 {{ post.comments.count }}
+            <a href="javascript:void(0)" onclick="toggleComments('{{ post.id }}')">Comments</a>
+        </p>
+
+        <div id="comments-{{ post.id }}" class="dropdown" style="display:none;">
+            {% for comment in post.comments.all %}
+                <p>
+                    <b><a href="{% url 'user_profile' comment.user.username %}">{{ comment.user.username }}</a></b>: 
+                    {{ comment.content }}
+                </p>
+            {% empty %}
+                <p>No comments yet</p>
+            {% endfor %}
+
+            <!-- Comment Form -->
+            <form action="{% url 'comment_post' post.id %}" method="POST">
+                {% csrf_token %}
+                <input type="text" name="content" placeholder="Add a comment..." required>
+                <button type="submit">Post</button>
+            </form>
+        </div>
+    </div>
+    {% endwith %}
+    {% empty %}
+        <p>No posts yet from other users.</p>
+    {% endfor %}
+
+    <!-- JS for dropdown toggle -->
+    <script>
+        function toggleLikes(postId) {
+            const section = document.getElementById('likes-' + postId);
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleComments(postId) {
+            const section = document.getElementById('comments-' + postId);
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+
+</body>
+</html>
