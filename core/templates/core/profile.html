@@ -1,0 +1,23 @@
+{% block content %}
+<h2>{{ profile_user.username }}'s Profile</h2>
+
+
+{% if profile_user != request.user %}
+    <form action="{% url 'follow_user' profile_user.username %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Follow</button>
+    </form>
+{% endif %}
+
+<h3>Posts</h3>
+{% for post in posts %}
+    <div class="post">
+        <p>{{ post.caption }}</p>
+        {% if post.image %}
+            <img src="{{ post.image.url }}" alt="Post Image" width="300">
+        {% endif %}
+    </div>
+{% empty %}
+    <p>No posts yet.</p>
+{% endfor %}
+{% endblock %}

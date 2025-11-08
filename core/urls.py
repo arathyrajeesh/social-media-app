@@ -10,6 +10,12 @@ urlpatterns = [
     path('reset/', views.reset_password_view, name='reset_password'),
     path('feed/', views.feed_view, name='feed'),
     path('create/', views.create_post_view, name='create_post'),
+    path('like/<int:post_id>/', views.like_post_view, name='like_post'),
+    path('comment/<int:post_id>/', views.comment_post, name='comment_post'),
+    path('user/<str:username>/', views.user_profile_view, name='user_profile'),
+    path('user/<str:username>/follow/', views.follow_user, name='follow_user'),
+    path('user/<str:username>/unfollow/', views.unfollow_user, name='unfollow_user'),
+
 ]
 
 

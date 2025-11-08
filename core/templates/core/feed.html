@@ -1,16 +1,48 @@
-<h2>Welcome, {{ user.username }}</h2>
-<p><a href="{% url 'create_post' %}">Create New Post</a> | <a href="{% url 'login' %}">Logout</a></p>
-<hr>
+{% block content %}
+<h2>Welcome, {{ request.user.username }}!</h2>
 
 {% for post in posts %}
-    <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
-        <strong>{{ post.user.username }}</strong><br>
-        {% if post.image %}
-        <img src="{{ post.image.url }}" width="300"><br>
+<div class="post">
+    <p>
+        <strong>
+            <a href="{% url 'user_profile' post.user.username %}">
+                {{ post.user.username }}
+            </a>
+        </strong>
+        <span> • {{ post.created_at|date:"M d, Y H:i" }}</span>
+    </p>
+
+    <p>{{ post.caption }}</p>
+    {% if post.image %}
+        <img src="{{ post.image.url }}" alt="Post Image" width="300">
+    {% endif %}
+
+    <p>
+        ❤️ {{ post.likes.count }} Likes
+        {% if post.id in liked_posts %}
+            <a href="{% url 'like_post' post.id %}">Unlike</a>
+        {% else %}
+            <a href="{% url 'like_post' post.id %}">Like</a>
         {% endif %}
-        <p>{{ post.caption }}</p>
-        <small>{{ post.created_at|date:"M d, Y H:i" }}</small>
+    </p>
+
+    <form action="{% url 'comment_post' post.id %}" method="POST">
+        {% csrf_token %}
+        <input type="text" name="content" placeholder="Add a comment...">
+        <button type="submit">Post</button>
+    </form>
+
+    <div class="comments">
+        {% for comment in post.comments.all %}
+            <p><b>{{ comment.user.username }}</b>: {{ comment.content }}</p>
+        {% empty %}
+            <p>No comments yet</p>
+        {% endfor %}
     </div>
+
+    <hr>
+</div>
 {% empty %}
-    <p>No posts yet. Be the first to post!</p>
+    <p>No posts yet.</p>
 {% endfor %}
+{% endblock %}

@@ -5,9 +5,11 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.conf import settings
 from .forms import RegisterForm,PostForm
-from .models import Profile,Post
+from .models import Profile,Post,Like,Follow
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 def register_view(request):
     if request.method == 'POST':
@@ -68,7 +70,7 @@ def login_view(request):
             profile = Profile.objects.get(user=user)
             if profile.is_verified:
                 login(request, user)
-                return render(request, 'core/feed.html', {'user': user})
+                return redirect('feed')  # ✅ Go to feed after successful login
             else:
                 return render(request, 'core/login.html', {'error': 'Please verify your email first'})
         else:
@@ -159,12 +161,6 @@ def reset_password_view(request):
     return render(request, 'core/reset_password.html')
 
 @login_required
-def feed_view(request):
-    posts = Post.objects.all().order_by('-created_at')
-    return render(request, 'core/feed.html', {'posts': posts})
-
-
-@login_required
 def create_post_view(request):
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
@@ -176,3 +172,56 @@ def create_post_view(request):
     else:
         form = PostForm()
     return render(request, 'core/create_post.html', {'form': form})
+
+
+@login_required
+def like_post_view(request, post_id):
+    post = Post.objects.get(id=post_id)
+    like, created = Like.objects.get_or_create(post=post, user=request.user)
+    if not created:
+        # If already liked, unlike it
+        like.delete()
+    return HttpResponseRedirect(reverse('feed'))
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+from .models import Post, Like, Comment
+
+@login_required
+def feed_view(request):
+    posts = Post.objects.all().order_by('-created_at')
+    liked_posts = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
+    return render(request, 'core/feed.html', {'posts': posts, 'liked_posts': liked_posts})
+
+@login_required
+def comment_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        if content:
+            Comment.objects.create(post=post, user=request.user, content=content)
+    return redirect('feed')
+
+def user_profile_view(request, username):
+    profile_user = get_object_or_404(User, username=username)
+    posts = Post.objects.filter(user=profile_user).order_by('-created_at')
+    profile = Profile.objects.get(user=profile_user)
+    return render(request, 'core/profile.html', {
+        'profile_user': profile_user,
+        'posts': posts,
+        'profile': profile
+    })
+
+@login_required
+def follow_user(request, username):
+    user_to_follow = get_object_or_404(User, username=username)
+    if user_to_follow != request.user:
+        Follow.objects.get_or_create(follower=request.user, following=user_to_follow)
+    return redirect('user_profile', username=username)
+
+@login_required
+def unfollow_user(request, username):
+    user_to_unfollow = get_object_or_404(User, username=username)
+    Follow.objects.filter(follower=request.user, following=user_to_unfollow).delete()
+    return redirect('user_profile', username=username)
