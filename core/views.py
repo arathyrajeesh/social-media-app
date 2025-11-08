@@ -4,9 +4,10 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.conf import settings
-from .forms import RegisterForm
-from .models import Profile
+from .forms import RegisterForm,PostForm
+from .models import Profile,Post
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 def register_view(request):
     if request.method == 'POST':
@@ -67,7 +68,7 @@ def login_view(request):
             profile = Profile.objects.get(user=user)
             if profile.is_verified:
                 login(request, user)
-                return render(request, 'core/welcome.html', {'user': user})
+                return render(request, 'core/feed.html', {'user': user})
             else:
                 return render(request, 'core/login.html', {'error': 'Please verify your email first'})
         else:
@@ -156,3 +157,22 @@ def reset_password_view(request):
         return redirect('login')
 
     return render(request, 'core/reset_password.html')
+
+@login_required
+def feed_view(request):
+    posts = Post.objects.all().order_by('-created_at')
+    return render(request, 'core/feed.html', {'posts': posts})
+
+
+@login_required
+def create_post_view(request):
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.user = request.user
+            post.save()
+            return redirect('feed')
+    else:
+        form = PostForm()
+    return render(request, 'core/create_post.html', {'form': form})

@@ -1,0 +1,16 @@
+<h2>Welcome, {{ user.username }}</h2>
+<p><a href="{% url 'create_post' %}">Create New Post</a> | <a href="{% url 'login' %}">Logout</a></p>
+<hr>
+
+{% for post in posts %}
+    <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+        <strong>{{ post.user.username }}</strong><br>
+        {% if post.image %}
+        <img src="{{ post.image.url }}" width="300"><br>
+        {% endif %}
+        <p>{{ post.caption }}</p>
+        <small>{{ post.created_at|date:"M d, Y H:i" }}</small>
+    </div>
+{% empty %}
+    <p>No posts yet. Be the first to post!</p>
+{% endfor %}
