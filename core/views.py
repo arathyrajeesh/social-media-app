@@ -6,6 +6,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from .forms import RegisterForm
 from .models import Profile
+from django.contrib import messages
 
 def register_view(request):
     if request.method == 'POST':
@@ -73,3 +74,85 @@ def login_view(request):
             return render(request, 'core/login.html', {'error': 'Invalid credentials'})
 
     return render(request, 'core/login.html')
+
+def resend_otp_view(request):
+    email = request.session.get('email')
+    if not email:
+        return redirect('register')
+
+    user = User.objects.get(email=email)
+    profile = Profile.objects.get(user=user)
+
+    # Generate a new OTP
+    otp = str(random.randint(100000, 999999))
+    profile.otp = otp
+    profile.save()
+
+    # Send new OTP email
+    send_mail(
+        'Your New OTP for Verification',
+        f'Hello {user.username},\n\nYour new OTP is {otp}.',
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=False,
+    )
+
+    return render(request, 'core/verify_otp.html', {
+        'email': email,
+        'message': 'A new OTP has been sent to your email.'
+    })
+
+def forgot_password_view(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        try:
+            user = User.objects.get(email=email)
+            profile = Profile.objects.get(user=user)
+
+            otp = str(random.randint(100000, 999999))
+            profile.otp = otp
+            profile.save()
+
+            send_mail(
+                'Password Reset OTP',
+                f'Hi {user.username},\n\nYour password reset OTP is {otp}.',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+
+            request.session['reset_email'] = email
+            return redirect('reset_password')
+        except User.DoesNotExist:
+            return render(request, 'core/forgot_password.html', {'error': 'Email not found'})
+    return render(request, 'core/forgot_password.html')
+
+
+def reset_password_view(request):
+    email = request.session.get('reset_email')
+    if not email:
+        return redirect('forgot_password')
+
+    user = User.objects.get(email=email)
+    profile = Profile.objects.get(user=user)
+
+    if request.method == 'POST':
+        otp = request.POST.get('otp')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if otp != profile.otp:
+            return render(request, 'core/reset_password.html', {'error': 'Invalid OTP'})
+
+        if new_password != confirm_password:
+            return render(request, 'core/reset_password.html', {'error': 'Passwords do not match'})
+
+        user.set_password(new_password)
+        user.save()
+        profile.otp = ''
+        profile.save()
+
+        messages.success(request, 'Password reset successful! You can now log in.')
+        return redirect('login')
+
+    return render(request, 'core/reset_password.html')
