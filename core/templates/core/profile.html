@@ -1,22 +1,26 @@
 {% block content %}
 <h2>{{ profile_user.username }}'s Profile</h2>
 
-
-{% if profile_user != request.user %}
-    <form action="{% url 'follow_user' profile_user.username %}" method="post">
-        {% csrf_token %}
-        <button type="submit">Follow</button>
-    </form>
+{% if profile_user == request.user %}
+    <p>This is your profile. You can see all your posts here.</p>
+{% else %}
+    {% if is_following %}
+        <a href="{% url 'unfollow_user' profile_user.username %}">Unfollow</a>
+    {% else %}
+        <a href="{% url 'follow_user' profile_user.username %}">Follow</a>
+    {% endif %}
 {% endif %}
 
-<h3>Posts</h3>
+<hr>
+
 {% for post in posts %}
-    <div class="post">
-        <p>{{ post.caption }}</p>
-        {% if post.image %}
-            <img src="{{ post.image.url }}" alt="Post Image" width="300">
-        {% endif %}
-    </div>
+<div class="post" style="border:1px solid #ddd;padding:10px;margin:15px 0;border-radius:8px;">
+    <p>{{ post.caption }}</p>
+    {% if post.image %}
+        <img src="{{ post.image.url }}" width="300" style="border-radius:10px;">
+    {% endif %}
+    <p>❤️ {{ post.likes.count }} Likes</p>
+</div>
 {% empty %}
     <p>No posts yet.</p>
 {% endfor %}
