@@ -1,0 +1,31 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<h2>Home Feed</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Post</button>
+</form>
+
+{% for post in posts %}
+    <div style="border:1px solid #ccc; margin:10px; padding:10px;">
+        <p><b>{{ post.user.username }}</b> - {{ post.caption }}</p>
+        {% if post.image %}
+        <img src="{{ post.image.url }}" width="300">
+        {% endif %}
+        <p>Likes: {{ post.likes.count }}</p>
+        <a href="{% url 'like_post' post.id %}">Like / Unlike</a>
+
+        <form method="POST" action="{% url 'comment_post' post.id %}">
+        {% csrf_token %}
+        <input type="text" name="text" placeholder="Add comment...">
+        <button type="submit">Comment</button>
+        </form>
+
+        {% for comment in post.comments.all %}
+        <p><b>{{ comment.user.username }}</b>: {{ comment.text }}</p>
+        {% endfor %}
+    </div>
+{% endfor %}
+{% endblock %}
