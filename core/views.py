@@ -210,11 +210,24 @@ def unfollow_user(request, username):
 
 @login_required
 def feed_view(request):
-    # Show all posts EXCEPT the logged-in user's own posts
+    # Get all posts except the logged-in user's posts
     posts = Post.objects.exclude(user=request.user).order_by('-created_at')
-    liked_posts = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
-    return render(request, 'core/feed.html', {'posts': posts, 'liked_posts': liked_posts})
 
+    liked_posts = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
+    
+    # Preload likes for each post to reduce queries
+    posts_data = []
+    for post in posts:
+        likes = Like.objects.filter(post=post).select_related('user')
+        posts_data.append({
+            'post': post,
+            'likes': [like.user for like in likes],
+        })
+    
+    return render(request, 'core/feed.html', {
+        'posts_data': posts_data,
+        'liked_posts': liked_posts,
+    })
 
 @login_required
 def user_profile_view(request, username):
@@ -230,3 +243,10 @@ def user_profile_view(request, username):
         'posts': posts,
         'is_following': is_following,
     })
+
+
+def post_likes_view(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    liked_users = post.likes.all()  # Assuming Post model has a ManyToManyField for likes
+    return render(request, 'core/post_likes.html', {'post': post, 'liked_users': liked_users})
+

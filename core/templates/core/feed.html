@@ -1,56 +1,108 @@
 {% block content %}
 <h2>Welcome, {{ request.user.username }}!</h2>
 
-{% for post in posts %}
-<div class="post" style="border:1px solid #ddd;padding:10px;margin:15px 0;border-radius:8px;">
-    
-    <!-- 🧑 User -->
+{% for item in posts_data %}
+{% with post=item.post likes=item.likes %}
+<div class="post" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 20px;">
+    <!-- Post Header -->
     <p>
         <strong>
             <a href="{% url 'user_profile' post.user.username %}">
                 {{ post.user.username }}
             </a>
         </strong>
-        <span style="color:#777;"> • {{ post.created_at|date:"M d, Y H:i" }}</span>
+        <span> • {{ post.created_at|date:"M d, Y H:i" }}</span>
     </p>
 
-    <!-- 📸 Caption + Image -->
+    <!-- Caption & Image -->
     <p>{{ post.caption }}</p>
     {% if post.image %}
-        <img src="{{ post.image.url }}" alt="Post Image" width="300" style="border-radius:10px;">
+        <img src="{{ post.image.url }}" alt="Post Image" width="300" style="border-radius:8px;">
     {% endif %}
 
-    <!-- ❤️ Likes -->
+    <!-- Likes -->
     <p>
-        ❤️ {{ post.likes.count }} Likes
-        <form action="{% url 'like_post' post.id %}" method="post" style="display:inline;">
-            {% csrf_token %}
-            {% if post.id in liked_posts %}
-                <button type="submit" style="border:none;background:none;color:red;">Unlike</button>
-            {% else %}
-                <button type="submit" style="border:none;background:none;color:gray;">Like</button>
-            {% endif %}
-        </form>
+        ❤️ {{ post.likes.count }}
+        <a href="javascript:void(0)" onclick="toggleLikes('{{ post.id }}')">View Likes</a>
+
+        {% if post.id in liked_posts %}
+            <a href="{% url 'like_post' post.id %}">Unlike</a>
+        {% else %}
+            <a href="{% url 'like_post' post.id %}">Like</a>
+        {% endif %}
     </p>
 
-    <!-- 💬 Comments -->
-    <form action="{% url 'comment_post' post.id %}" method="POST">
-        {% csrf_token %}
-        <input type="text" name="content" placeholder="Add a comment..." style="width:70%;padding:5px;">
-        <button type="submit">Post</button>
-    </form>
-
-    <div class="comments" style="margin-top:10px;">
-        {% for comment in post.comment_set.all %}
-            <p><b>{{ comment.user.username }}</b>: {{ comment.content }}</p>
-        {% empty %}
-            <p>No comments yet</p>
-        {% endfor %}
+    <!-- Likes Dropdown -->
+    <div id="likes-{{ post.id }}" class="dropdown" style="display: none; margin-left: 20px;">
+        <ul>
+            {% for user in likes %}
+                <li>
+                    <a href="{% url 'user_profile' user.username %}">{{ user.username }}</a>
+                </li>
+            {% empty %}
+                <li>No likes yet</li>
+            {% endfor %}
+        </ul>
     </div>
 
-    <hr>
+    <!-- Comments -->
+    <p>
+        💬 {{ post.comments.count }}
+        <a href="javascript:void(0)" onclick="toggleComments('{{ post.id }}')">Comments</a>
+    </p>
+
+    <!-- Comments Dropdown -->
+    <div id="comments-{{ post.id }}" class="dropdown" style="display: none; margin-left: 20px;">
+        <div>
+            {% for comment in post.comments.all %}
+                <p><b>{{ comment.user.username }}</b>: {{ comment.content }}</p>
+            {% empty %}
+                <p>No comments yet</p>
+            {% endfor %}
+        </div>
+
+        <!-- Comment Form -->
+        <form action="{% url 'comment_post' post.id %}" method="POST" style="margin-top: 10px;">
+            {% csrf_token %}
+            <input type="text" name="content" placeholder="Add a comment..." required>
+            <button type="submit">Post</button>
+        </form>
+    </div>
 </div>
+
+{% endwith %}
 {% empty %}
     <p>No posts yet.</p>
 {% endfor %}
+
+<!-- JS for dropdown toggle -->
+<script>
+function toggleLikes(postId) {
+    const section = document.getElementById('likes-' + postId);
+    section.style.display = (section.style.display === 'none') ? 'block' : 'none';
+}
+
+function toggleComments(postId) {
+    const section = document.getElementById('comments-' + postId);
+    section.style.display = (section.style.display === 'none') ? 'block' : 'none';
+}
+</script>
+
+<!-- Optional: smooth dropdown animation -->
+<style>
+.dropdown {
+    transition: all 0.3s ease-in-out;
+    background: #fafafa;
+    padding: 10px;
+    border-radius: 8px;
+}
+.dropdown ul {
+    list-style: none;
+    padding-left: 10px;
+}
+.dropdown ul li {
+    margin: 4px 0;
+}
+</style>
+
 {% endblock %}
