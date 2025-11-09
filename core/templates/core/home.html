@@ -1,31 +1,153 @@
-{% extends 'core/base.html' %}
-{% block content %}
-<h2>Home Feed</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to SocialMedia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f9;
+            margin: 0;
+            padding: 0 20px;
+        }
 
-<form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Post</button>
-</form>
+        nav {
+            background-color: #f2f2f2;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
 
-{% for post in posts %}
-    <div style="border:1px solid #ccc; margin:10px; padding:10px;">
-        <p><b>{{ post.user.username }}</b> - {{ post.caption }}</p>
-        {% if post.image %}
-        <img src="{{ post.image.url }}" width="300">
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #333;
+        }
+
+        nav a:hover {
+            color: #007bff;
+        }
+
+        h1, h2 {
+            text-align: center;
+        }
+
+        .post {
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 15px auto;
+            max-width: 600px;
+        }
+
+        .post img {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        .disabled {
+            color: gray;
+            cursor: not-allowed;
+        }
+
+        button {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .comment-box {
+            margin-top: 8px;
+        }
+
+        input[type=text] {
+            padding: 5px;
+            width: 80%;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <a href="{% url 'home' %}">Home</a>
+        {% if request.user.is_authenticated %}
+            <a href="{% url 'feed' %}">My Feed</a>
+            <a href="{% url 'user_profile' request.user.username %}">My Profile</a>
+            <a href="{% url 'create_post' %}">Create Post</a>
+            <a href="{% url 'logout' %}">Logout</a>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'register' %}">Register</a>
         {% endif %}
-        <p>Likes: {{ post.likes.count }}</p>
-        <a href="{% url 'like_post' post.id %}">Like / Unlike</a>
+    </nav>
 
-        <form method="POST" action="{% url 'comment_post' post.id %}">
-        {% csrf_token %}
-        <input type="text" name="text" placeholder="Add comment...">
-        <button type="submit">Comment</button>
-        </form>
+    <h1>Welcome to SocialMedia</h1>
+    <h2>Recent Posts</h2>
+
+    {% for item in posts_data %}
+    {% with post=item.post likes=item.likes %}
+    <div class="post">
+        <p>
+            <strong>
+                <a href="{% url 'user_profile' post.user.username %}">{{ post.user.username }}</a>
+            </strong>
+            • {{ post.created_at|date:"M d, Y H:i" }}
+        </p>
+
+        <p>{{ post.caption }}</p>
+        {% if post.image %}
+            <img src="{{ post.image.url }}" alt="Post Image">
+        {% endif %}
+
+        <!-- Likes Section -->
+        <p>❤️ {{ likes|length }} Likes</p>
+
+        {% if request.user.is_authenticated %}
+            {% if post.id in liked_posts %}
+                <a href="{% url 'like_post' post.id %}">Unlike</a>
+            {% else %}
+                <a href="{% url 'like_post' post.id %}">Like</a>
+            {% endif %}
+        {% else %}
+            <span class="disabled">Login to Like</span>
+        {% endif %}
+
+        <!-- Comments Section -->
+        <p>💬 {{ post.comments.count }} Comments</p>
 
         {% for comment in post.comments.all %}
-        <p><b>{{ comment.user.username }}</b>: {{ comment.text }}</p>
+            <p><b>{{ comment.user.username }}</b>: {{ comment.content }}</p>
+        {% empty %}
+            <p>No comments yet</p>
         {% endfor %}
+
+        {% if request.user.is_authenticated %}
+        <div class="comment-box">
+            <form action="{% url 'comment_post' post.id %}" method="POST">
+                {% csrf_token %}
+                <input type="text" name="content" placeholder="Add a comment..." required>
+                <button type="submit">Post</button>
+            </form>
+        </div>
+        {% else %}
+            <p class="disabled">Login to comment</p>
+        {% endif %}
     </div>
-{% endfor %}
-{% endblock %}
+    {% endwith %}
+    {% empty %}
+        <p style="text-align:center;">No posts yet.</p>
+    {% endfor %}
+
+</body>
+</html>

@@ -10,6 +10,29 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.shortcuts import render, redirect
+
+from django.shortcuts import render, redirect
+from .models import Post, Like
+
+def home_view(request):
+    posts = Post.objects.all().order_by('-created_at')
+    posts_data = []
+
+    # Get liked posts only if user is logged in
+    liked_posts = []
+    if request.user.is_authenticated:
+        liked_posts = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
+
+    for post in posts:
+        likes = [like.user for like in Like.objects.filter(post=post)]
+        posts_data.append({'post': post, 'likes': likes})
+
+    return render(request, 'core/home.html', {
+        'posts_data': posts_data,
+        'liked_posts': liked_posts,
+    })
+
 
 def register_view(request):
     if request.method == 'POST':
@@ -282,7 +305,7 @@ def feed_view(request):
 def user_profile_view(request, username):
     profile_user = get_object_or_404(User, username=username)
 
-    # If it's the owner, show all posts, else exclude hidden posts
+    # If it's the owner, show all posts; otherwise, show only visible ones
     if profile_user == request.user:
         posts = Post.objects.filter(user=profile_user).order_by('-created_at')
     else:
@@ -290,20 +313,16 @@ def user_profile_view(request, username):
 
     is_following = Follow.objects.filter(follower=request.user, following=profile_user).exists()
 
-    # Prepare top-level comments
     posts_data = []
     for post in posts:
-        top_comments = post.comments.filter(parent__isnull=True).select_related('user').prefetch_related('replies', 'liked_by')
-        posts_data.append({
-            'post': post,
-            'top_comments': top_comments,
-        })
+        top_comments = post.comments.filter(parent__isnull=True).select_related('user')
+        posts_data.append({'post': post, 'top_comments': top_comments})
 
     liked_posts = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
 
-    return render(request, 'core/profile.html', {
+    return render(request, 'core/user_profile.html', {
         'profile_user': profile_user,
-        'posts_data': posts_data,
+        'posts': posts,
         'is_following': is_following,
         'liked_posts': liked_posts,
     })

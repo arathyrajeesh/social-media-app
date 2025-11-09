@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('', views.home_view, name='home'),  # Home page
     path('register/', views.register_view, name='register'),
     path('verify/', views.verify_otp_view, name='verify_otp'),
     path('resend/', views.resend_otp_view, name='resend_otp'),
@@ -22,5 +23,3 @@ urlpatterns = [
     path('comment/like/<int:comment_id>/', views.like_comment, name='like_comment'),
     path('logout/', views.logout_view, name='logout'),
 ]
-
-
