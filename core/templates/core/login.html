@@ -1,14 +1,330 @@
-<h2>Login</h2>
-{% if error %}
-<p style="color:red;">{{ error }}</p>
-{% endif %}
-<form method="POST">
-    {% csrf_token %}
-    <label>Username:</label>
-    <input type="text" name="username" required>
-    <label>Password:</label>
-    <input type="password" name="password" required>
-    <button type="submit">Login</button>
-    <p><a href="{% url 'forgot_password' %}">Forgot Password?</a></p>
+{% comment %} <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Connect</title>
+    <!-- Font Awesome for Icons (Self-Contained via CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        /* General & Layout Styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(180deg, #fafafa 0%, #f0f0f0 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #262626;
+        }
 
-</form>
+        /* Main login card */
+        .login-container {
+            background-color: #fff;
+            padding: 25px 40px 30px 40px;
+            border: 1px solid #dbdbdb;
+            border-radius: 6px;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+
+        .login-container:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        }
+
+        /* Logo/Title */
+        h2 {
+            font-family: 'Billabong', cursive, sans-serif;
+            color: #262626;
+            margin-bottom: 25px;
+            margin-top: 10px;
+            font-size: 42px;
+            font-weight: normal;
+            letter-spacing: 0.5px;
+            transition: transform 0.3s;
+        }
+
+        h2:hover {
+            transform: scale(1.05);
+        }
+
+        /* Error Message */
+        .error-message {
+            color: #ed4956;
+            background-color: #fee;
+            border: 1px solid #ed4956;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        /* Form Inputs */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        form label {
+            position: absolute;
+            left: -9999px;
+        }
+
+        form input[type="text"],
+        form input[type="password"] {
+            width: 100%;
+            padding: 10px 12px;
+            background-color: #fafafa;
+            border: 1px solid #dbdbdb;
+            border-radius: 3px;
+            font-size: 14px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        form input[type="text"]:focus,
+        form input[type="password"]:focus {
+            border-color: #a8a8a8;
+            background-color: #fff;
+            outline: none;
+        }
+
+        /* Login Button (Standard) */
+        form button[type="submit"] {
+            width: 100%;
+            background-color: #0095f6;
+            color: white;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        form button[type="submit"]:hover {
+            background-color: #1877f2;
+        }
+
+        /* OR Separator Styling */
+        .separator {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 25px 0 15px 0;
+            font-size: 12px;
+            color: #a8a8a8;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .separator::before,
+        .separator::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #dbdbdb;
+        }
+
+        .separator:not(:empty)::before {
+            margin-right: .5em;
+        }
+
+        .separator:not(:empty)::after {
+            margin-left: .5em;
+        }
+
+        /* Social Login Buttons */
+        .social-login-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .social-login-btn:hover {
+            opacity: 0.9;
+        }
+
+        .social-login-btn i {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        .facebook-btn {
+            background-color: #1877f2; /* Facebook Blue */
+            color: white;
+        }
+
+        .google-btn {
+            background-color: white;
+            color: #262626; /* Dark text */
+            border: 1px solid #dbdbdb;
+        }
+
+        .google-btn i {
+            color: #ea4335; /* Google Red */
+        }
+
+
+        /* Forgot Password Link */
+        .forgot-link {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+        
+        .forgot-link a {
+            color: #00376b;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .forgot-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* Signup Card */
+        .signup-card {
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #dbdbdb;
+            border-radius: 6px;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+        }
+
+        .signup-card a {
+            color: #0095f6;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .signup-card a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 450px) {
+            .login-container,
+            .signup-card {
+                border: none;
+                box-shadow: none;
+                background: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>Connect</h2>
+
+        {% if error %}
+        <p class="error-message">{{ error }}</p>
+        {% endif %}
+
+        {% load socialaccount %}
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" placeholder="Phone number, username, or email" required>
+            
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" placeholder="Password" required>
+            
+            <button type="submit">Log In</button>
+            
+            <!-- OR Divider -->
+            <div class="separator">OR</div>
+
+            <a href="{% provider_login_url 'google' %}" class="social-login-btn google-btn">
+                <i class="fab fa-google"></i>Login with Google
+            </a>
+
+            <p class="forgot-link" style="margin-top: 25px;"><a href="{% url 'forgot_password' %}">Forgot password?</a></p>
+        </form>
+    </div>
+    
+    <div class="signup-card">
+        <p>Don't have an account? 
+            <a href="{% url 'register' %}">Sign up</a>
+        </p>
+    </div>
+
+</body>
+</html> {% endcomment %}
+
+
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Connect</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; background: #fafafa; display:flex; justify-content:center; align-items:center; height:100vh; }
+        .login-container { background:#fff; padding:30px; border:1px solid #dbdbdb; border-radius:8px; width:350px; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+        h2 { margin-bottom:20px; font-size:32px; }
+        input { width:100%; padding:10px; margin-bottom:10px; border:1px solid #dbdbdb; border-radius:4px; }
+        button { width:100%; padding:10px; background:#0095f6; color:white; border:none; border-radius:4px; font-weight:600; }
+        .separator { margin:20px 0; text-align:center; color:#999; position:relative; }
+        .separator:before, .separator:after { content:""; position:absolute; width:40%; height:1px; background:#dbdbdb; top:50%; }
+        .separator:before { left:0; } .separator:after { right:0; }
+        .social-login-btn { display:flex; justify-content:center; align-items:center; padding:10px; border-radius:4px; border:1px solid #dbdbdb; color:#444; text-decoration:none; font-weight:600; }
+        .social-login-btn i { color:#ea4335; margin-right:8px; }
+        .forgot-link a { color:#00376b; text-decoration:none; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Connect</h2>
+        {% if error %}
+            <p style="color:red;">{{ error }}</p>
+        {% endif %}
+        {% if messages %}
+            {% for message in messages %}
+                <p style="color:green;">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            <input type="text" name="username" placeholder="Username or email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Log In</button>
+        </form>
+
+        <div class="separator">OR</div>
+
+        <a href="{% provider_login_url 'google' %}" class="social-login-btn">
+            <i class="fab fa-google"></i> Continue with Google
+        </a>
+
+        <p class="forgot-link"><a href="{% url 'forgot_password' %}">Forgot password?</a></p>
+        <p>Don't have an account? <a href="{% url 'register' %}">Sign up</a></p>
+    </div>
+</body>
+</html>

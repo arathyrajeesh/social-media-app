@@ -93,12 +93,12 @@ def login_view(request):
             profile = Profile.objects.get(user=user)
             if profile.is_verified:
                 login(request, user)
-                return redirect('feed')  # ✅ Go to feed after successful login
+                messages.success(request, f'Welcome back, {user.username}!')
+                return redirect('feed')
             else:
                 return render(request, 'core/login.html', {'error': 'Please verify your email first'})
         else:
             return render(request, 'core/login.html', {'error': 'Invalid credentials'})
-
     return render(request, 'core/login.html')
 
 def logout_view(request):
@@ -301,11 +301,11 @@ def feed_view(request):
         'liked_posts': liked_posts,
     })
 
-@login_required
+
+@login_required(login_url='login')
 def user_profile_view(request, username):
     profile_user = get_object_or_404(User, username=username)
 
-    # If it's the owner, show all posts; otherwise, show only visible ones
     if profile_user == request.user:
         posts = Post.objects.filter(user=profile_user).order_by('-created_at')
     else:
@@ -326,3 +326,4 @@ def user_profile_view(request, username):
         'is_following': is_following,
         'liked_posts': liked_posts,
     })
+
