@@ -1,161 +1,192 @@
-{% comment %} <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Register | Social App</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .register-container {
-            background-color: #fff;
-            padding: 40px 50px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 400px;
-        }
-
-        .register-container h2 {
-            margin-bottom: 25px;
-            color: #333;
-        }
-
-        form input {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0 16px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-        }
-
-        button {
-            background-color: #4f46e5;
-            color: white;
-            border: none;
-            padding: 10px;
-            width: 100%;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        button:hover {
-            background-color: #3730a3;
-        }
-
-        .social-login-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: #db4437;
-            color: white;
-            text-decoration: none;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-
-        .social-login-btn:hover {
-            background: #c23321;
-        }
-
-        .separator {
-            margin: 20px 0;
-            position: relative;
-            text-align: center;
-            color: #999;
-        }
-
-        .separator::before, .separator::after {
-            content: "";
-            height: 1px;
-            width: 40%;
-            background: #ccc;
-            position: absolute;
-            top: 50%;
-        }
-
-        .separator::before { left: 0; }
-        .separator::after { right: 0; }
-
-        p {
-            margin-top: 15px;
-        }
-
-        a {
-            color: #4f46e5;
-            text-decoration: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="register-container">
-        <h2>Create Your Account</h2>
-
-        <form method="POST">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Register</button>
-        </form>
-
-        <div class="separator">OR</div>
-
-        {% load socialaccount %}
-        <a href="{% provider_login_url 'google' %}" class="social-login-btn google-btn">
-            <i class="fab fa-google"></i> Continue with Google
-        </a>
-
-        <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
-    </div>
-</body>
-</html> {% endcomment %}
-
 {% load socialaccount %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Register | Social App</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Connect</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
     <style>
-        body { background: linear-gradient(135deg,#f5f7fa,#c3cfe2); display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; }
-        .register-container { background:#fff; padding:40px; border-radius:10px; width:400px; box-shadow:0 4px 15px rgba(0,0,0,0.1); text-align:center; }
-        input { width:100%; padding:10px; margin:8px 0; border:1px solid #ccc; border-radius:6px; }
-        button { background:#4f46e5; color:#fff; border:none; padding:10px; width:100%; border-radius:6px; cursor:pointer; }
-        .social-login-btn { display:flex; align-items:center; justify-content:center; gap:8px; background:#fff; color:#444; border:1px solid #dbdbdb; padding:10px; border-radius:6px; text-decoration:none; font-weight:600; }
-        .social-login-btn i { color:#ea4335; }
+        /* Base Styles - Consistent Look */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        /* Main container card */
+        .auth-container {
+            background-color: #fff;
+            padding: 40px 40px 30px 40px;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        /* Header Title */
+        h2 {
+            color: #1a202c;
+            margin-bottom: 30px;
+            margin-top: 5px;
+            font-size: 26px;
+            font-weight: 600;
+        }
+
+        /* Form Styling (Targeting Django's form output) */
+        form p {
+            margin: 0 0 15px 0;
+            text-align: left;
+        }
+        
+        form label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        form p .helptext {
+            display: none !important;
+        }
+        form .helptext, form ul.errorlist {
+            display: none;
+        }
+        
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: #f7f9fb;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: all 0.2s ease-in-out;
+        }
+
+        input:focus {
+            border-color: #007bff;
+            background-color: #fff;
+            box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        /* Button Styling */
+        button[type="submit"] {
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: background 0.3s ease;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        /* Separator (OR) */
+        .separator {
+            margin: 20px 0;
+            color: #adb5bd;
+            position: relative;
+            text-align: center;
+            font-size: 14px;
+        }
+        .separator:before, .separator:after {
+            content: "";
+            position: absolute;
+            width: 35%;
+            height: 1px;
+            background: #e1e4e8;
+            top: 50%;
+        }
+        .separator:before { left: 0; }
+        .separator:after { right: 0; }
+
+        /* Social Login Button */
+        .social-login-btn {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            background-color: #fff;
+            color: #495057;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+        .social-login-btn i {
+            color: #ea4335;
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        .social-login-btn:hover {
+            background: #f7f9fb;
+            border-color: #adb5bd;
+        }
+
+        /* Login Link */
+        p.login-link {
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .auth-container a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .auth-container a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 450px) {
+            .auth-container {
+                border: none;
+                box-shadow: none;
+                background: none;
+                padding: 20px;
+                max-width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="register-container">
+    <div class="auth-container">
         <h2>Create Your Account</h2>
         <form method="POST">
             {% csrf_token %}
-            {{ form.as_p }}
+            {{ form.as_p }} 
             <button type="submit">Register</button>
         </form>
 
-        <div style="margin:20px 0;">OR</div>
+        <div class="separator">OR</div>
 
         <a href="{% provider_login_url 'google' %}" class="social-login-btn">
             <i class="fab fa-google"></i> Continue with Google
         </a>
 
-        <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
+        <p class="login-link">Already have an account? <a href="{% url 'login' %}">Login</a></p>
     </div>
 </body>
 </html>
