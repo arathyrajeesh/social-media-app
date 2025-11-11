@@ -163,6 +163,11 @@
             text-decoration: underline;
         }
 
+        .input-error {
+            border: 1px solid #dc3545 !important;
+            background-color: #fff6f6 !important;
+        }
+
         /* Mobile adjustments */
         @media (max-width: 450px) {
             .auth-container {
@@ -209,5 +214,49 @@
             Don't have an account? <a href="{% url 'register' %}">Sign up</a>
         </p>
     </div>
+    <script>
+    document.querySelector("form").addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        const username = document.querySelector('input[name="username"]');
+        const password = document.querySelector('input[name="password"]');
+        const fields = [username, password];
+        let hasError = false;
+
+        // Clear previous errors
+        document.querySelectorAll(".input-error").forEach(el => el.classList.remove("input-error"));
+        const oldMsg = document.querySelector(".message");
+        if (oldMsg) oldMsg.remove();
+
+        // Validate all fields
+        fields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add("input-error");
+                hasError = true;
+            }
+        });
+
+        if (hasError) {
+            showMessage("Please fill in all fields before logging in.", "error");
+            return;
+        }
+
+        this.submit();
+    });
+
+    document.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", () => input.classList.remove("input-error"));
+    });
+
+    function showMessage(message, type) {
+        const container = document.querySelector(".auth-container");
+        const msg = document.createElement("p");
+        msg.className = type === "error" ? "message error-message" : "message success-message";
+        msg.textContent = message;
+        const form = container.querySelector("form");
+        container.insertBefore(msg, form);
+    }
+    </script>
+
 </body>
 </html>

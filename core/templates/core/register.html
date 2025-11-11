@@ -158,7 +158,22 @@
         .auth-container a:hover {
             text-decoration: underline;
         }
-
+        .input-error {
+            border: 1px solid #dc3545 !important;
+            background-color: #fff6f6 !important;
+        }
+                .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .error-message {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
         /* Mobile adjustments */
         @media (max-width: 450px) {
             .auth-container {
@@ -174,7 +189,7 @@
 <body>
     <div class="auth-container">
         <h2>Create Your Account</h2>
-        <form method="POST">
+        <form method="POST" novalidate>
             {% csrf_token %}
             {{ form.as_p }} 
             <button type="submit">Register</button>
@@ -188,5 +203,48 @@
 
         <p class="login-link">Already have an account? <a href="{% url 'login' %}">Login</a></p>
     </div>
+    <script>
+    document.querySelector("form").addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        const inputs = this.querySelectorAll("input");
+        let hasError = false;
+
+        // Remove previous highlights and messages
+        document.querySelectorAll(".input-error").forEach(el => el.classList.remove("input-error"));
+        const oldMsg = document.querySelector(".message");
+        if (oldMsg) oldMsg.remove();
+
+        // Check for empty fields
+        inputs.forEach(input => {
+            if (!input.value.trim()) {
+                input.classList.add("input-error");
+                hasError = true;
+            }
+        });
+
+        if (hasError) {
+            showMessage("Please fill out all required fields.", "error");
+            return;
+        }
+
+        this.submit();
+    });
+
+    // Remove red border on typing
+    document.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", () => input.classList.remove("input-error"));
+    });
+
+    function showMessage(message, type) {
+        const container = document.querySelector(".auth-container");
+        const msg = document.createElement("p");
+        msg.className = type === "error" ? "message error-message" : "message success-message";
+        msg.textContent = message;
+        const form = container.querySelector("form");
+        container.insertBefore(msg, form);
+    }
+    </script>
+
 </body>
 </html>
