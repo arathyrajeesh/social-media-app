@@ -21,5 +21,12 @@ urlpatterns = [
     path('post/delete/<int:post_id>/', views.delete_post_view, name='delete_post'),
     path('post/toggle-hide/<int:post_id>/', views.toggle_hide_post_view, name='toggle_hide_post'),
     path('comment/like/<int:comment_id>/', views.like_comment, name='like_comment'),
+    path('inbox/', views.inbox_view, name='inbox'),
+    path('chat/<str:username>/', views.chat_view, name='chat'),
+    path('send-message/<str:username>/', views.send_message_view, name='send_message'),
+    path('share/<int:post_id>/', views.share_post_view, name='share_post'),
+    path('save/<int:post_id>/', views.save_post_view, name='save_post'),
+    path('saved/', views.saved_posts_view, name='saved_posts'),
+    path('search/', views.search_view, name='search'),
     path('logout/', views.logout_view, name='logout'),
 ]

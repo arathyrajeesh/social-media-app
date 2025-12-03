@@ -2,173 +2,512 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ request.user.username }}'s Feed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
+        * {
             margin: 0;
-            padding: 0 20px;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        nav {
-            padding: 10px;
-            background-color: #f2f2f2;
-            margin-bottom: 20px;
-            border-radius: 5px;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #fafafa;
+            color: #262626;
         }
 
-        nav a {
-            margin-right: 15px;
-            text-decoration: none;
-            color: #333;
-        }
-
-        nav a:hover {
-            color: #007bff;
-        }
-
-        .post {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 8px;
+        .navbar {
             background-color: #fff;
+            border-bottom: 1px solid #dbdbdb;
+            padding: 0 20px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .post img {
-            border-radius: 8px;
-            max-width: 100%;
+        .navbar .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #262626;
         }
 
-        .dropdown {
-            transition: all 0.3s ease-in-out;
-            background: #fafafa;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 5px;
+        .navbar .nav-icons {
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
 
-        .dropdown ul {
-            list-style: none;
-            padding-left: 10px;
-        }
-
-        .dropdown ul li {
-            margin: 4px 0;
-        }
-
-        input[type=text] {
-            padding: 5px;
-            width: 80%;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-
-        button {
-            padding: 5px 10px;
-            border-radius: 4px;
-            border: none;
-            background-color: #007bff;
-            color: #fff;
+        .nav-icon {
+            font-size: 24px;
+            color: #262626;
+            text-decoration: none;
             cursor: pointer;
         }
 
-        button:hover {
-            background-color: #0056b3;
+        .nav-icon:hover {
+            color: #8e8e8e;
+        }
+
+        .feed-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .post {
+            background-color: #fff;
+            border: 1px solid #dbdbdb;
+            border-radius: 3px;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            justify-content: space-between;
+        }
+
+        .post-user {
+            display: flex;
+            align-items: center;
+        }
+
+        .post-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #dbdbdb;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #8e8e8e;
+        }
+
+        .post-username {
+            font-weight: 600;
+            font-size: 14px;
+            color: #262626;
+            text-decoration: none;
+        }
+
+        .post-options {
+            font-size: 20px;
+            color: #262626;
+            cursor: pointer;
+        }
+
+        .post-image {
+            width: 100%;
+            display: block;
+        }
+
+        .post-actions {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            margin-right: 16px;
+            cursor: pointer;
+            color: #262626;
+        }
+
+        .action-btn.liked {
+            color: #ed4956;
+        }
+
+        .action-btn.bookmark {
+            margin-left: auto;
+        }
+
+        .action-btn.saved {
+            color: #0095f6;
+        }
+
+        .post-likes {
+            font-weight: 600;
+            font-size: 14px;
+            padding: 0 16px;
+            margin-bottom: 8px;
+        }
+
+        .post-caption {
+            padding: 0 16px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .post-caption .username {
+            font-weight: 600;
+            margin-right: 4px;
+        }
+
+        .post-comments-toggle {
+            color: #8e8e8e;
+            font-size: 14px;
+            padding: 0 16px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .post-time {
+            color: #8e8e8e;
+            font-size: 12px;
+            padding: 0 16px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .post-add-comment {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-top: 1px solid #efefef;
+        }
+
+        .comment-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            color: #262626;
+        }
+
+        .comment-input::placeholder {
+            color: #8e8e8e;
+        }
+
+        .post-btn {
+            background: none;
+            border: none;
+            color: #0095f6;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .no-posts {
+            text-align: center;
+            color: #8e8e8e;
+            margin-top: 50px;
+            padding: 20px;
+        }
+
+        .no-posts h2 {
+            color: #262626;
+            font-size: 24px;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .no-posts p {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .suggestions-section {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .suggestions-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #8e8e8e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+        }
+
+        .suggestions-grid {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px 0;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        .suggestions-grid::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        .suggestion-card-link {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .suggestion-card {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #dbdbdb;
+            border-radius: 6px;
+            background-color: #fff;
+            flex-shrink: 0;
+            width: 150px;
+            transition: background-color 0.2s;
+        }
+
+        .suggestion-card:hover {
+            background-color: #f8f8f8;
+        }
+
+        .suggestion-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #dbdbdb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #8e8e8e;
+            margin-right: 10px;
+        }
+
+        .suggestion-info {
+            flex: 1;
+        }
+
+        .suggestion-username {
+            font-weight: 600;
+            font-size: 14px;
+            color: #262626;
+            margin-bottom: 5px;
+        }
+
+        .follow-btn-small {
+            background-color: #0095f6;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .follow-btn-small:hover {
+            background-color: #007acc;
+        }
+
+        @media (max-width: 768px) {
+            .feed-container {
+                padding: 0;
+                max-width: 100%;
+            }
+
+            .post {
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                margin-bottom: 8px;
+            }
+
+            .post-header {
+                padding: 10px 12px;
+            }
+
+            .post-actions {
+                padding: 8px 12px;
+            }
+
+            .post-likes {
+                padding: 0 12px;
+                margin-bottom: 4px;
+            }
+
+            .post-caption {
+                padding: 0 12px;
+                margin-bottom: 4px;
+            }
+
+            .post-comments-toggle {
+                padding: 0 12px;
+                margin-bottom: 4px;
+            }
+
+            .post-time {
+                padding: 0 12px;
+                margin-bottom: 8px;
+            }
+
+            .post-add-comment {
+                padding: 8px 12px;
+            }
         }
     </style>
 </head>
 <body>
-
-    <!-- Navigation -->
-    <nav>
-        <a href="{% url 'feed' %}">Home</a>
-        <a href="{% url 'user_profile' request.user.username %}">My Profile</a>
-        <a href="{% url 'create_post' %}">Create Post</a>
-        <a href="{% url 'logout' %}">Logout</a>
+    <nav class="navbar">
+        <div class="logo">Instagram</div>
+        <div class="nav-icons">
+            <a href="{% url 'search' %}" class="nav-icon" title="Search">🔍</a>
+            <a href="{% url 'inbox' %}" class="nav-icon" title="Messages">💬</a>
+            <a href="{% url 'user_profile' request.user.username %}" class="nav-icon" title="Profile">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background-color: #dbdbdb; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #8e8e8e;">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+            </a>
+        </div>
     </nav>
 
-    <h2>Welcome, {{ request.user.username }}!</h2>
+    <div class="feed-container">
+        {% for item in posts_data %}
+        {% with post=item.post likes=item.likes %}
+        <article class="post">
+            <!-- Post Header -->
+            <header class="post-header">
+                <div class="post-user">
+                    <div class="post-avatar">
+                        {{ post.user.username|slice:":1"|upper }}
+                    </div>
+                    <a href="{% url 'user_profile' post.user.username %}" class="post-username">{{ post.user.username }}</a>
+                </div>
+                <div class="post-options">⋯</div>
+            </header>
 
-    <!-- Feed -->
-    {% for item in posts_data %}
-    {% with post=item.post likes=item.likes %}
-    <div class="post">
-        <!-- Post Header -->
-        <p>
-            <strong>
-                <a href="{% url 'user_profile' post.user.username %}">{{ post.user.username }}</a>
-            </strong>
-            • {{ post.created_at|date:"M d, Y H:i" }}
-        </p>
-
-        <!-- Caption & Image -->
-        <p>{{ post.caption }}</p>
-        {% if post.image %}
-            <img src="{{ post.image.url }}" alt="Post Image">
-        {% endif %}
-
-        <!-- Likes -->
-        <p>
-            ❤️ {{ likes|length }}
-            <a href="javascript:void(0)" onclick="toggleLikes('{{ post.id }}')">View Likes</a>
-
-            {% if post.id in liked_posts %}
-                <a href="{% url 'like_post' post.id %}">Unlike</a>
-            {% else %}
-                <a href="{% url 'like_post' post.id %}">Like</a>
+            <!-- Post Image -->
+            {% if post.image %}
+            <img src="{{ post.image.url }}" alt="Post by {{ post.user.username }}" class="post-image">
             {% endif %}
-        </p>
 
-        <div id="likes-{{ post.id }}" class="dropdown" style="display:none;">
-            <ul>
-                {% for user in likes %}
-                    <li><a href="{% url 'user_profile' user.username %}">{{ user.username }}</a></li>
-                {% empty %}
-                    <li>No likes yet</li>
+            <!-- Post Actions -->
+            <div class="post-actions">
+                <button class="action-btn {% if post.id in liked_posts %}liked{% endif %}" onclick="toggleLike({{ post.id }})">
+                    {% if post.id in liked_posts %}❤️{% else %}🤍{% endif %}
+                </button>
+                <button class="action-btn" onclick="toggleComments('{{ post.id }}')">💬</button>
+                <a href="{% url 'share_post' post.id %}" class="action-btn">📤</a>
+                <a href="{% url 'save_post' post.id %}" class="action-btn bookmark {% if post.id in saved_posts %}saved{% endif %}">
+                    {% if post.id in saved_posts %}🔖{% else %}🔖{% endif %}
+                </a>
+            </div>
+
+            <!-- Likes -->
+            {% if likes %}
+            <div class="post-likes">{{ likes|length }} like{% if likes|length != 1 %}s{% endif %}</div>
+            {% endif %}
+
+            <!-- Caption -->
+            {% if post.caption %}
+            <div class="post-caption">
+                <span class="username">{{ post.user.username }}</span>{{ post.caption }}
+            </div>
+            {% endif %}
+
+            <!-- Comments Toggle -->
+            {% if post.comments.count > 0 %}
+            <div class="post-comments-toggle" onclick="toggleComments('{{ post.id }}')">
+                View all {{ post.comments.count }} comment{% if post.comments.count != 1 %}s{% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Time -->
+            <div class="post-time">{{ post.created_at|timesince }}</div>
+
+            <!-- Comments Section -->
+            <div id="comments-{{ post.id }}" style="display: none;">
+                {% for comment in post.comments.all %}
+                <div class="post-caption" style="padding: 8px 16px;">
+                    <span class="username">{{ comment.user.username }}</span>{{ comment.content }}
+                </div>
                 {% endfor %}
-            </ul>
+            </div>
+
+            <!-- Add Comment -->
+            <div class="post-add-comment">
+                <input type="text" class="comment-input" placeholder="Add a comment..." id="comment-input-{{ post.id }}">
+                <button class="post-btn" onclick="addComment({{ post.id }})">Post</button>
+            </div>
+        </article>
+        {% endwith %}
+        {% empty %}
+        <div class="no-posts">
+            <h2>Welcome to Instagram</h2>
+            <p>When you follow people, you'll see the photos and videos they post here.</p>
         </div>
+        {% endfor %}
 
-        <!-- Comments -->
-        <p>
-            💬 {{ post.comments.count }}
-            <a href="javascript:void(0)" onclick="toggleComments('{{ post.id }}')">Comments</a>
-        </p>
-
-        <div id="comments-{{ post.id }}" class="dropdown" style="display:none;">
-            {% for comment in post.comments.all %}
-                <p><b>{{ comment.user.username }}</b>: {{ comment.content }}</p>
-            {% empty %}
-                <p>No comments yet</p>
-            {% endfor %}
-
-            <!-- Comment Form -->
-            <form action="{% url 'comment_post' post.id %}" method="POST">
-                {% csrf_token %}
-                <input type="text" name="content" placeholder="Add a comment..." required>
-                <button type="submit">Post</button>
-            </form>
+        <!-- Suggested Users -->
+        {% if suggested_users %}
+        <div class="suggestions-section">
+            <div class="suggestions-header">
+                <h3>Suggestions for you</h3>
+            </div>
+            <div class="suggestions-grid">
+                {% for user in suggested_users %}
+                <a href="{% url 'user_profile' user.username %}" class="suggestion-card-link">
+                    <div class="suggestion-card">
+                        <div class="suggestion-avatar">
+                            {{ user.username|slice:":1"|upper }}
+                        </div>
+                        <div class="suggestion-info">
+                            <div class="suggestion-username">{{ user.username }}</div>
+                            <div class="suggestion-action">
+                                <button onclick="event.stopPropagation(); window.location.href='{% url 'follow_user' user.username %}'" class="follow-btn-small">Follow</button>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
         </div>
+        {% endif %}
     </div>
-    {% endwith %}
-    {% empty %}
-        <p>No posts yet from other users.</p>
-    {% endfor %}
 
-    <!-- JS for dropdown toggle -->
     <script>
-        function toggleLikes(postId) {
-            const section = document.getElementById('likes-' + postId);
-            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        function toggleLike(postId) {
+            // For now, redirect to like URL
+            window.location.href = "{% url 'like_post' 0 %}".replace('0', postId);
         }
 
         function toggleComments(postId) {
             const section = document.getElementById('comments-' + postId);
             section.style.display = section.style.display === 'none' ? 'block' : 'none';
         }
-    </script>
 
+        function addComment(postId) {
+            const input = document.getElementById('comment-input-' + postId);
+            if (input.value.trim()) {
+                // Create a form and submit
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{% url 'comment_post' 0 %}".replace('0', postId);
+
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                const contentInput = document.createElement('input');
+                contentInput.type = 'hidden';
+                contentInput.name = 'content';
+                contentInput.value = input.value;
+
+                form.appendChild(csrfInput);
+                form.appendChild(contentInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
 </body>
 </html>

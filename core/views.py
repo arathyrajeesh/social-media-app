@@ -5,15 +5,14 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.conf import settings
 from .forms import RegisterForm,PostForm
-from .models import Profile,Post,Like,Follow,Comment
+from .models import Profile,Post,Like,Follow,Comment,Message,SavedPost
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render, redirect
+from django.db.models import Q
 
-from django.shortcuts import render, redirect
-from .models import Post, Like
 
 def home_view(request):
     posts = Post.objects.all().order_by('-created_at')
@@ -283,10 +282,17 @@ def like_comment(request, comment_id):
 
 @login_required
 def feed_view(request):
-    # Exclude hidden posts and own posts from the feed
-    posts = Post.objects.filter(hidden=False).exclude(user=request.user).order_by('-created_at')
+    # Get users that the current user is following
+    following_users = Follow.objects.filter(follower=request.user).values_list('following', flat=True)
+
+    # Show posts only from followed users, exclude hidden posts and own posts
+    posts = Post.objects.filter(
+        user__in=following_users,
+        hidden=False
+    ).exclude(user=request.user).order_by('-created_at')
 
     liked_posts = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
+    saved_posts = SavedPost.objects.filter(user=request.user).values_list('post_id', flat=True)
 
     posts_data = []
     for post in posts:
@@ -296,9 +302,15 @@ def feed_view(request):
             'likes': [like.user for like in likes],
         })
 
+    # Get suggested users (users not followed, exclude self and staff/admin)
+    all_users = User.objects.exclude(id=request.user.id).exclude(is_staff=True).exclude(is_superuser=True)
+    suggested_users = all_users.exclude(id__in=following_users)[:6]  # Limit to 6 suggestions
+
     return render(request, 'core/feed.html', {
         'posts_data': posts_data,
         'liked_posts': liked_posts,
+        'saved_posts': saved_posts,
+        'suggested_users': suggested_users,
     })
 
 
@@ -341,5 +353,141 @@ def user_profile_view(request, username):
         'following_count': following_count,
         'is_owner': is_owner,
         'is_verified': is_verified,
+    })
+
+
+@login_required
+def inbox_view(request):
+    # Get all users who have messaged the current user or vice versa
+    sent_messages = Message.objects.filter(sender=request.user).values_list('receiver', flat=True)
+    received_messages = Message.objects.filter(receiver=request.user).values_list('sender', flat=True)
+    user_ids = set(sent_messages) | set(received_messages)
+
+    conversations = []
+    for user_id in user_ids:
+        other_user = User.objects.get(id=user_id)
+        last_message = Message.objects.filter(
+            (Q(sender=request.user) & Q(receiver=other_user)) |
+            (Q(sender=other_user) & Q(receiver=request.user))
+        ).order_by('-created_at').first()
+
+        unread_count = Message.objects.filter(sender=other_user, receiver=request.user, is_read=False).count()
+
+        conversations.append({
+            'user': other_user,
+            'last_message': last_message,
+            'unread_count': unread_count,
+        })
+
+    conversations.sort(key=lambda x: x['last_message'].created_at if x['last_message'] else timezone.now(), reverse=True)
+
+    return render(request, 'core/inbox.html', {'conversations': conversations})
+
+
+@login_required
+def chat_view(request, username):
+    other_user = get_object_or_404(User, username=username)
+
+    # Mark messages as read
+    Message.objects.filter(sender=other_user, receiver=request.user, is_read=False).update(is_read=True)
+
+    # Get all messages between the two users
+    messages = Message.objects.filter(
+        (Q(sender=request.user) & Q(receiver=other_user)) |
+        (Q(sender=other_user) & Q(receiver=request.user))
+    ).order_by('created_at')
+
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        if content:
+            Message.objects.create(sender=request.user, receiver=other_user, content=content)
+        return redirect('chat', username=username)
+
+    return render(request, 'core/chat.html', {
+        'other_user': other_user,
+        'messages': messages,
+    })
+
+
+@login_required
+def send_message_view(request, username):
+    other_user = get_object_or_404(User, username=username)
+
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        if content:
+            Message.objects.create(sender=request.user, receiver=other_user, content=content)
+
+    return redirect('chat', username=username)
+
+
+@login_required
+def search_view(request):
+    query = request.GET.get('q', '')
+    results = []
+
+    if query:
+        # Search users by username, exclude staff/admin and self
+        results = User.objects.filter(
+            username__icontains=query
+        ).exclude(is_staff=True).exclude(is_superuser=True).exclude(id=request.user.id)[:20]
+
+    return render(request, 'core/search.html', {
+        'query': query,
+        'results': results,
+    })
+
+
+@login_required
+def share_post_view(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+
+    # Get users that the current user is following
+    following_users = Follow.objects.filter(follower=request.user).values_list('following', flat=True)
+    recipients = User.objects.filter(id__in=following_users)
+
+    if request.method == 'POST':
+        recipient_id = request.POST.get('recipient')
+        if recipient_id:
+            recipient = get_object_or_404(User, id=recipient_id)
+            # Send the post as a message
+            message_content = f"Shared a post: {post.caption[:50]}... Check it out!"
+            Message.objects.create(sender=request.user, receiver=recipient, content=message_content)
+            return redirect('chat', username=recipient.username)
+
+    return render(request, 'core/share_post.html', {
+        'post': post,
+        'recipients': recipients,
+    })
+
+
+@login_required
+def save_post_view(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    saved_post, created = SavedPost.objects.get_or_create(user=request.user, post=post)
+
+    if not created:
+        # Already saved, so unsave it
+        saved_post.delete()
+
+    return HttpResponseRedirect(reverse('feed'))
+
+
+@login_required
+def saved_posts_view(request):
+    saved_posts = SavedPost.objects.filter(user=request.user).select_related('post')
+    posts = [saved.post for saved in saved_posts]
+
+    posts_data = []
+    for post in posts:
+        top_comments = post.comments.filter(parent__isnull=True).select_related('user')
+        posts_data.append({'post': post, 'top_comments': top_comments})
+
+    liked_posts = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
+
+    return render(request, 'core/saved_posts.html', {
+        'posts': posts,
+        'posts_data': posts_data,
+        'liked_posts': liked_posts,
     })
 

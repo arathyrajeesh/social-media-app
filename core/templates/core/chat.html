@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with {{ other_user.username }} - Instagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #fafafa;
+            color: #262626;
+        }
+
+        .navbar {
+            background-color: #fff;
+            border-bottom: 1px solid #dbdbdb;
+            padding: 0 20px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar .back-btn {
+            font-size: 24px;
+            color: #262626;
+            text-decoration: none;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+        }
+
+        .chat-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #dbdbdb;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #8e8e8e;
+        }
+
+        .chat-username {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .chat-container {
+            max-width: 600px;
+            margin: 0 auto;
+            height: calc(100vh - 108px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            max-width: 70%;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+            background-color: #0095f6;
+            color: white;
+        }
+
+        .message.received {
+            align-self: flex-start;
+            background-color: #f1f1f1;
+            color: #262626;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #8e8e8e;
+            margin-top: 4px;
+        }
+
+        .message.sent .message-time {
+            text-align: right;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .message-input-container {
+            border-top: 1px solid #dbdbdb;
+            padding: 12px 16px;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 8px 12px;
+            font-size: 14px;
+            background-color: #f8f8f8;
+            border-radius: 22px;
+            margin-right: 8px;
+        }
+
+        .send-btn {
+            background: none;
+            border: none;
+            color: #0095f6;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .no-messages {
+            text-align: center;
+            color: #8e8e8e;
+            font-size: 16px;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="{% url 'inbox' %}" class="back-btn">←</a>
+        <div class="chat-header">
+            <div class="chat-avatar">
+                {{ other_user.username|slice:":1"|upper }}
+            </div>
+            <div class="chat-username">{{ other_user.username }}</div>
+        </div>
+        <div></div>
+    </nav>
+
+    <div class="chat-container">
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
+                {{ message.content }}
+                <div class="message-time">{{ message.created_at|date:"H:i" }}</div>
+            </div>
+            {% empty %}
+            <div class="no-messages">No messages yet. Start the conversation!</div>
+            {% endfor %}
+        </div>
+
+        <form method="post" class="message-input-container">
+            {% csrf_token %}
+            <input type="text" name="content" class="message-input" placeholder="Message..." required>
+            <button type="submit" class="send-btn">Send</button>
+        </form>
+    </div>
+</body>
+</html>
