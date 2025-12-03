@@ -320,10 +320,26 @@ def user_profile_view(request, username):
 
     liked_posts = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
 
+    # Profile summary metrics
+    total_posts = Post.objects.filter(user=profile_user).count()
+    followers_count = Follow.objects.filter(following=profile_user).count()
+    following_count = Follow.objects.filter(follower=profile_user).count()
+    is_owner = profile_user == request.user
+    try:
+        profile = Profile.objects.get(user=profile_user)
+        is_verified = profile.is_verified
+    except Profile.DoesNotExist:
+        is_verified = False
+
     return render(request, 'core/user_profile.html', {
         'profile_user': profile_user,
         'posts': posts,
         'is_following': is_following,
         'liked_posts': liked_posts,
+        'total_posts': total_posts,
+        'followers_count': followers_count,
+        'following_count': following_count,
+        'is_owner': is_owner,
+        'is_verified': is_verified,
     })
 

@@ -76,7 +76,6 @@
 <body>
 
     <nav>
-        <a href="{% url 'home' %}">Home</a>
         <a href="{% url 'feed' %}">Feed</a>
         <a href="{% url 'logout' %}">Logout</a>
     </nav>
@@ -84,8 +83,21 @@
     <div class="container">
         <h2>{{ profile_user.username }}'s Profile</h2>
 
-        {% if profile_user.first_name or profile_user.last_name %}
-            <p><strong>Name:</strong> {{ profile_user.first_name }} {{ profile_user.last_name }}</p>
+        <p><strong>Username:</strong> {{ profile_user.username }}</p>
+        {% if profile_user.email %}
+            <p><strong>Email:</strong> {{ profile_user.email }}</p>
+        {% endif %}
+        <p><strong>Verified:</strong> {{ is_verified|yesno:"Yes,No" }}</p>
+        <p>
+            <strong>Stats:</strong>
+            {{ total_posts }} posts • {{ followers_count }} followers • {{ following_count }} following
+        </p>
+        {% if not is_owner %}
+            {% if is_following %}
+                <a href="{% url 'unfollow_user' profile_user.username %}">Unfollow</a>
+            {% else %}
+                <a href="{% url 'follow_user' profile_user.username %}">Follow</a>
+            {% endif %}
         {% endif %}
 
         <hr>

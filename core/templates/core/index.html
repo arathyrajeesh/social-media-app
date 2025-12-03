@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% comment %} <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -81,15 +81,8 @@
     <!-- Navigation -->
     <nav>
         <a href="{% url 'home' %}">Home</a>
-        {% if request.user.is_authenticated %}
-            <a href="{% url 'feed' %}">Reels</a>
-            <a href="{% url 'user_profile' request.user.username %}">My Profile</a>
-            <a href="{% url 'create_post' %}">Create Post</a>
-            <a href="{% url 'logout' %}">Logout</a>
-        {% else %}
-            <a href="{% url 'login' %}">Login</a>
-            <a href="{% url 'register' %}">Register</a>
-        {% endif %}
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'register' %}">Register</a>
     </nav>
 
     <h1>Welcome to SocialMedia</h1>
@@ -150,4 +143,4 @@
     {% endfor %}
 
 </body>
-</html>
+</html> {% endcomment %}
